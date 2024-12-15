@@ -23,7 +23,8 @@ import axios from "axios";
 
 export default function HistoryPage() {
   const [timeFrame, setTimeFrame] = useState<TimeFrame>("daily");
-  const [data, setData] = useState<any | null>(null); // Holds the entire dataset
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [data, setData] = useState<any | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const { toast } = useToast();
 
