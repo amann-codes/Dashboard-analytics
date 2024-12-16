@@ -23,9 +23,10 @@ import axios from "axios";
 
 export default function HistoryPage() {
   const [timeFrame, setTimeFrame] = useState<TimeFrame>("daily");
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [data, setData] = useState<any | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [sortOption, setSortOption] = useState<string>("none");
+  const [filterRegion, setFilterRegion] = useState<string>("all");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -33,7 +34,6 @@ export default function HistoryPage() {
       setLoading(true);
       try {
         const response = await axios.get(`/api/data`);
-        console.log("Fetched data:", response.data);
         setData(response.data);
 
         toast({
@@ -52,7 +52,8 @@ export default function HistoryPage() {
       }
     };
     fetchData();
-  }, [toast]);
+  }, [timeFrame]);
+
   const handleTimeFrameChange = (value: TimeFrame) => {
     setTimeFrame(value);
     toast({
@@ -60,6 +61,33 @@ export default function HistoryPage() {
       description: `Displaying ${value} data.`,
     });
   };
+
+  const handleSortChange = (value: string) => {
+    setSortOption(value);
+    toast({
+      title: "Sorting Applied",
+      description: `Sorting data by ${value}.`,
+    });
+  };
+
+  const handleFilterChange = (value: string) => {
+    setFilterRegion(value);
+    toast({
+      title: "Filter Applied",
+      description: `Filtering data by region: ${value}.`,
+    });
+  };
+
+  const processData = (dataCategory: any) => {
+    let processedData = [...dataCategory];
+    if (sortOption === "valueAsc") {
+      processedData.sort((a, b) => a.value - b.value);
+    } else if (sortOption === "valueDesc") {
+      processedData.sort((a, b) => b.value - a.value);
+    }
+    return processedData;
+  };
+
   const currentData = data ? data[timeFrame] : null;
 
   return (
@@ -91,15 +119,38 @@ export default function HistoryPage() {
               <SelectItem value="monthly">Monthly</SelectItem>
             </SelectContent>
           </Select>
+
+          <Select
+            value={sortOption}
+            onValueChange={(value) => handleSortChange(value)}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">None</SelectItem>
+              <SelectItem value="valueAsc">Ascending</SelectItem>
+              <SelectItem value="valueDesc">Descending</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {loading ? (
           <p>Loading...</p>
         ) : currentData ? (
           <>
-            <DataTable data={currentData.revenue} title="Revenue Data" />
-            <DataTable data={currentData.userGrowth} title="User Growth Data" />
-            <DataTable data={currentData.engagement} title="Engagement Data" />
+            <DataTable
+              data={processData(currentData.revenue)}
+              title="Revenue Data"
+            />
+            <DataTable
+              data={processData(currentData.userGrowth)}
+              title="User Growth Data"
+            />
+            <DataTable
+              data={processData(currentData.engagement)}
+              title="Engagement Data"
+            />
           </>
         ) : (
           <p>No data available.</p>
